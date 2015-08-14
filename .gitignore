@@ -1,0 +1,15 @@
+.DS_Store
+Thumbs.db
+*.bak
+.idea
+*.pyc
+*.log
+.git
+.project
+.settings
+target
+.classpath
+/bin/
+.buildpath
+.springBeans
+.pydevproject
