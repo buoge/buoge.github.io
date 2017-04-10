@@ -1,0 +1,90 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description"><title>Sku选项可用判断 | buoge</title><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/normalize/5.0.0/normalize.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/pure/0.6.0/pure-min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/pure/0.6.0/grids-responsive-min.css"><link rel="stylesheet" type="text/css" href="/css/style.css?v=0.0.0"><link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.bootcss.com/jquery/3.1.1/jquery.min.js"></script><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">Sku选项可用判断</h1><a id="logo" href="/.">buoge</a><p class="description"></p></div><div id="nav-menu"><a href="/." class="current"><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 目录</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a><a href="/atom.xml"><i class="fa fa-rss"> 订阅</i></a></div></div><div id="layout" class="pure-g"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">Sku选项可用判断</h1><div class="post-meta">Apr 10, 2017<span> | </span><span class="category"><a href="/categories/algorithm/">数据算法</a></span><script src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js" async></script><span id="busuanzi_container_page_pv"> | <span id="busuanzi_value_page_pv"></span><span> Hits</span></span></div><a data-disqus-identifier="2017/04/10/Sku选项可用判断/" href="/2017/04/10/Sku选项可用判断/#disqus_thread" class="disqus-comment-count"></a><div class="post-content"><p><strong>sku选项改变之后动态的判断其余的sku选项是否可用</strong></p>
+<h3 id="判断前提"><a href="#判断前提" class="headerlink" title="判断前提"></a>判断前提</h3><ul>
+<li>一个sku由3个选项组成<br>SkuMap: {<br>sku1: a1;b2;c1<br>sku2: a2;b3;c2<br>sku3: a3;b1;c3<br>}</li>
+<li>选项可用的判断的条件：<ul>
+<li>sku的选项可以生成一个SkuOptionSet()={a1;b2;c1}</li>
+<li>假如当前选中了a1,SelectOption：{a1}</li>
+<li>如果要判断c1是否可用,MatchOption为{a1;c1}，遍历SkuMap中所有的Sku假如任一SkuOptionSet.contains(MatchOption),则表示待判断的OptionVal c1可用</li>
+</ul>
+</li>
+</ul>
+<h3 id="判断过程"><a href="#判断过程" class="headerlink" title="判断过程"></a>判断过程</h3><ol>
+<li>假设当前的选项有如下几个：<br>A:<strong><em>a1</em></strong> a2 a3<br>B:b1 <strong><em>b2</em></strong> b3<br>C:c1 c2 c3</li>
+</ol>
+<p>2.假设当前选 a1,b2:</p>
+<pre><code>2.1.获取当前选中 a1,b2 作为 select option
+2.2.使用select option和需要判断可用的项组成MatchOption，
+    使用MatchOption对所有sku进行匹配，
+    有任一sku匹配到此Option组合，则表示待判断的Option是可用的
+2.3. MatchOption如果包含了已经选中的项，需要把已经选中项提出：
+    * 判断 a 选项 a2 可用时:
+      match option（A:a1;B:b2;A:a2）去除已选中的A:a1后为:A:a1;B:b2;
+    * 判断 b 选项 b1 可用时:
+      match option（A:a1;B:b2;B:b1）去除已选中B:b2为:A:a1;B:b1;
+    * 可以匹配到canbuy ture else false
+</code></pre><ol>
+<li>特殊情况：如果当前选项只有一个值，那么这个值默认选中</li>
+</ol>
+<h3 id="这部分是-Android-判断部分的代码"><a href="#这部分是-Android-判断部分的代码" class="headerlink" title="这部分是 Android 判断部分的代码"></a>这部分是 Android 判断部分的代码</h3><pre><code>public void updateValueCanUseInOption(long confirmGroupID) {
+
+    List&lt;ConfirmOptionWrapper&gt; modelList = getModelList();
+
+    // 获取当前有哪些选中项
+    List&lt;ConfirmOptionWrapper&gt; currentItemOptionList = getModelList(confirmGroupID);
+
+    // optionWraper 的option 和 optionValWraper中的option内存地址不一样,没有currentSelectVal
+    Map&lt;String, String&gt; selOptionKSMap = getSelectOptionsKKVMap(currentItemOptionList, confirmGroupID);
+
+    Set&lt;String&gt; matchOptionSet = new HashSet&lt;String&gt;();
+
+    for (ConfirmOptionWrapper optionWrapper : modelList) {
+        if (!optionWrapper.isOptionTxt() &amp;&amp; !optionWrapper.isOptionImg()) {
+            continue;
+        }
+        if (CollectionsUtil.isListBlank(optionWrapper.optionValueWrappers)) {
+            continue;
+        }
+        for (ConfirmOptionValueWrapper optionValueWrapper : optionWrapper.optionValueWrappers) {
+
+            // 该选项是选中的item不用做可用判断,待判断item和点击触发的item不处于统一组时不做处理
+            if (optionValueWrapper == optionWrapper.tmpSelecValWrapper || optionWrapper.confirmGroupID != confirmGroupID) {
+                continue;
+            }
+            // 带判断item重置为默认
+            optionValueWrapper.isCanBuy = false;
+            matchOptionSet.clear();
+
+            // 默认把选中Map中的KVSet赋值到MatchSet中
+            for (Map.Entry&lt;String, String&gt; entry : selOptionKSMap.entrySet()) {
+                matchOptionSet.add(entry.getValue());
+            }
+            //LogUtils.i(&quot;====== selOptionSet  is &quot; + matchOptionSet.toString());
+
+            // 假如是匹配是当前Option在mactch set 中去除当前option 和 Vaule,得到匹配中的 matchOptionSetPre
+            String optionKeyStr = optionValueWrapper.getOptionValKeyStr();
+            if (selOptionKSMap.containsKey(optionKeyStr)) {
+                String currentSelOption = selOptionKSMap.get(optionKeyStr);
+                matchOptionSet.remove(currentSelOption);
+            }
+            //LogUtils.i(&quot;====== selOptionSet After Filter is &quot; + matchOptionSet.toString());
+
+            // 由得到匹配中的selectOptionKVSet和判断项组成mactchSet
+            String currentOptionKVStr = optionValueWrapper.getOptionValKVStr();
+            matchOptionSet.add(currentOptionKVStr);
+            //LogUtils.i(&quot;====== matchOptionSet is &quot; + matchOptionSet.toString());
+            // skuMap中假如有任一sku 的option set 匹配mactchset 则返回可用,循环判断每一个项
+            optionValueWrapper.isCanBuy = isOptionSetCanMatchInSkuMap(matchOptionSet,optionWrapper);
+            //  LogUtils.w(&quot;=====&quot; + optionValueWrapper.optionValue.value + &quot;:&quot; +optionValueWrapper.optionValue.opNameId + &quot;:&quot; +optionValueWrapper.optionValue.opValueId +&quot; wrapper.isCanBuy is :&quot; + optionValueWrapper.isCanBuy);
+        }
+    } // end: ConfirmOptionWrapper optionWrapper : modelList
+}
+</code></pre><p><a href="http://blog.jobbole.com/109138/" target="_blank" rel="external">扩展阅读：Sku 多维属性状态判断算法: http://blog.jobbole.com/109138/</a></p>
+</div><script type="text/javascript" src="/js/share.js?v=0.0.0" async></script><a data-url="http://yoursite.com/2017/04/10/Sku选项可用判断/" data-id="cj1br30ba0008l8s6bdl2y3ua" class="article-share-link">分享到</a><div class="tags"></div><div class="post-nav"><a href="/2017/01/01/2017-开年第一篇/" class="next">2017 开年第一篇</a></div><div id="disqus_thread"><script>var disqus_shortname = 'buoge-github-io';
+var disqus_identifier = '2017/04/10/Sku选项可用判断/';
+var disqus_title = 'Sku选项可用判断';
+var disqus_url = 'http://yoursite.com/2017/04/10/Sku选项可用判断/';
+(function() {
+  var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+  dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+  (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();</script><script id="dsq-count-scr" src="//buoge-github-io.disqus.com/count.js" async></script></div></div></div></div><div class="pure-u-1 pure-u-md-1-4"><div id="sidebar"><div class="widget"><form action="//www.google.com/search" method="get" accept-charset="utf-8" target="_blank" class="search-form"><input type="text" name="q" maxlength="20" placeholder="Search"/><input type="hidden" name="sitesearch" value="http://yoursite.com"/></form></div><div class="widget"><div class="widget-title"><i class="fa fa-folder-o"> 分类</i></div><ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/algorithm/">数据算法</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/thinking/">生活感悟</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-star-o"> 标签</i></div><div class="tagcloud"><a href="/tags/生活/" style="font-size: 15px;">生活</a> <a href="/tags/感悟/" style="font-size: 15px;">感悟</a> <a href="/tags/年终总结/" style="font-size: 15px;">年终总结</a> <a href="/tags/2017/" style="font-size: 15px;">2017</a> <a href="/tags/吃桃人/" style="font-size: 15px;">吃桃人</a> <a href="/tags/吐槽/" style="font-size: 15px;">吐槽</a></div></div><div class="widget"><div class="widget-title"><i class="fa fa-file-o"> 最新文章</i></div><ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2017/04/10/Sku选项可用判断/">Sku选项可用判断</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/01/01/2017-开年第一篇/">2017 开年第一篇</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/25/2016总结一年的工作与生活/">2016总结一年的工作与生活</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/25/工程师文化公司和有工程师的公司/">工程师文化公司和有工程师的公司</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/25/2016年其他小伙伴的总结/">2016年其他小伙伴的感悟</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/11/18/2016年下半年恢复锻炼/">2016年下半年恢复锻炼</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/11/04/hello-world/">2016 新的博客地址</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-comment-o"> 最近评论</i></div><script type="text/javascript" src="//buoge-github-io.disqus.com/recent_comments_widget.js?num_items=5&amp;hide_avatars=1&amp;avatar_size=32&amp;excerpt_length=20&amp;hide_mods=1"></script></div><div class="widget"><div class="widget-title"><i class="fa fa-external-link"> 友情链接</i></div><ul></ul><a href="http://buoge.com" title="buoge.com" target="_blank">buoge.com</a><ul></ul><a href="http://buoge.cn" title="buoge.cn" target="_blank">buoge.cn</a><ul></ul><a href="http://buobuotu.com" title="bobotu" target="_blank">bobotu</a></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">© <a href="/." rel="nofollow">buoge.</a> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a id="rocket" href="#top" class="show"></a><script type="text/javascript" src="/js/totop.js?v=0.0.0" async></script><script type="text/javascript" src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=0.0.0" async></script><link rel="stylesheet" type="text/css" href="/css/jquery.fancybox.css?v=0.0.0"><script type="text/javascript" src="/js/codeblock-resizer.js?v=0.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=0.0.0"></script></div></body></html>
